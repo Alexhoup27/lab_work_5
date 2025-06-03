@@ -525,5 +525,10 @@ func main() {
 	for i := range output_data {
 		write_to_file_line(data[i], *output_file)
 	}
+	output_file.Close()
+	duplicate_file.Close()
+	incorect_file.Close()
+	lefted_file.Close()
+	abnormal_file.Close()
 	fmt.Println("Done")
 }
