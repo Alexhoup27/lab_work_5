@@ -8,8 +8,6 @@ import (
 	"strings"
 )
 
-var file_path string
-
 type FlightNumber struct {
 	name string
 	id   int
@@ -455,6 +453,7 @@ func qsort(data []Record, left, right int) []Record {
 }
 
 func main() {
+	var file_path string
 	output_file, err_out := os.Create("output.txt")
 	duplicate_file, err_dup := os.Create("duplicate.txt")
 	incorect_file, err_inc := os.Create("incorect.txt")
@@ -476,6 +475,7 @@ func main() {
 	if err_abn != nil {
 		panic(err_abn)
 	}
+	fmt.Println("Enter file name with datatype")
 	fmt.Scan(&file_path)
 	file, f_err := os.Open(file_path)
 	if f_err != nil {
