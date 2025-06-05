@@ -35,20 +35,20 @@ type Record struct {
 
 func (record Record) String() string {
 	var to_return string
-	to_return += record.flight_number.name + "_" + string(record.flight_number.id)
+	to_return += record.flight_number.name + "_" + strconv.Itoa(record.flight_number.id)
 	to_return += ","
-	to_return += string(record.date.day) + "." + string(record.date.month) + "." + string(record.date.year)
+	to_return += strconv.Itoa(record.date.day) + "." + strconv.Itoa(record.date.month) + "." + string(record.date.year)
 	to_return += ","
 	delta_minutes, delta_hours := eval_time_delta(record.departure_time, record.arrival_time)
-	to_return += string(delta_hours) + ":" + string(delta_minutes)
+	to_return += strconv.Itoa(delta_hours) + ":" + strconv.Itoa(delta_minutes)
 	to_return += ","
-	to_return += string(record.free_count)
+	to_return += strconv.Itoa(record.free_count)
 	to_return += ","
 	to_return += eval_day_of_week(record.date)
 	to_return += ","
 	to_return += record.status
 	to_return += ","
-	to_return += string(record.ticket_cost * record.free_count)
+	to_return += strconv.Itoa(record.ticket_cost * record.free_count)
 	return to_return
 }
 
@@ -175,9 +175,9 @@ func eval_time(data string) (int, int) {
 func eval_time_delta(departure_time Time, arrival_time Time) (int, int) {
 	var hours, minutes, time_delta int
 	if arrival_time.hours < departure_time.hours {
-		time_delta = (arrival_time.hours+12)*60 + arrival_time.minutes - arrival_time.hours*60 - arrival_time.minutes
+		time_delta = (arrival_time.hours+12)*60 + arrival_time.minutes - departure_time.hours*60 - departure_time.minutes
 	} else {
-		time_delta = arrival_time.hours*60 + arrival_time.minutes - arrival_time.hours*60 - arrival_time.minutes
+		time_delta = arrival_time.hours*60 + arrival_time.minutes - departure_time.hours*60 - departure_time.minutes
 	}
 	hours = time_delta / 60
 	minutes = time_delta % 60
@@ -270,7 +270,7 @@ func check_time(time string) string { // remake with documentation - done
 		fmt.Println("Wrong hours")
 		return "abnormal"
 	}
-	if minutest <= 0 && minutest >= 60 {
+	if minutest <= 0 || minutest >= 60 {
 		fmt.Println("Wrong minutes")
 		return "abnormal"
 	}
