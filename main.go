@@ -4,10 +4,11 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"slices"
 	"strconv"
 	"strings"
 )
+
+var file_path string
 
 type FlightNumber struct {
 	name string
@@ -262,7 +263,7 @@ func check_time(time string) string { // remake with documentation - done
 	if err_h != nil || err_m != nil || (strings.Contains("p", time) == false &&
 		strings.Contains("P", time) == false && strings.Contains("a", time) == false &&
 		strings.Contains("A", time) == false) {
-		fmt.Println("Wron type of time ")
+		fmt.Println("Wrong type of time ")
 		return "incorect"
 	}
 	if hours <= 0 || hours >= 24 {
@@ -433,78 +434,13 @@ func write_to_file_line(line string, file os.File) {
 	file.WriteString(line)
 }
 
-// func mysort(data []Record) []Record {
-// 	if len(data) < 2 {
-// 		return data
-// 	}
-// 	start := len(data) / 2
-// 	for i := range data {
-// 		if (data[i].free_count * data[i].ticket_cost) >
-// 			(data[start].free_count * data[start].ticket_cost) {
-// 			elem := data[i]
-// 			data = slices.Concat(data[:i], data[i+1:start], data[start:])
-// 			data = append(data, elem)
-// 		} else if (data[i].free_count * data[i].ticket_cost) <
-// 			(data[start].free_count * data[start].ticket_cost) {
-// 			new_data := []Record{}
-// 			new_data[0] = data[i]
-// 			for g := 0; g < len(data); g++ {
-// 				if g != i {
-// 					new_data = append(new_data, data[g])
-// 				}
-// 			}
-// 			data = new_data
-// 		} else {
-// 			if data[i].flight_number.name > data[start].flight_number.name {
-// 				elem := data[i]
-// 				data = slices.Concat(data[:i], data[i+1:start], data[start:])
-// 				data = append(data, elem)
-// 			} else if data[i].flight_number.name < data[start].flight_number.name &&
-// 				data[i].flight_number.id > data[start].flight_number.id {
-// 				elem := data[i]
-// 				data = slices.Concat(data[:i], data[i+1:start], data[start:])
-// 				data = append(data, elem)
-// 			} else if data[i].flight_number.name < data[start].flight_number.name &&
-// 				data[i].flight_number.id < data[start].flight_number.id {
-// 				new_data := []Record{}
-// 				new_data[0] = data[i]
-// 				for g := 0; g < len(data); g++ {
-// 					if g != i {
-// 						new_data = append(new_data, data[g])
-// 					}
-// 				}
-// 				data = new_data
-// 			} else {
-// 				if status_converter(data[i].status) > status_converter(data[start].status) {
-// 					elem := data[i]
-// 					data = slices.Concat(data[:i], data[i+1:start], data[start:])
-// 					data = append(data, elem)
-// 				} else if status_converter(data[i].status) < status_converter(data[start].status) {
-// 					new_data := []Record{}
-// 					new_data[0] = data[i]
-// 					for g := 0; g < len(data); g++ {
-// 						if g != i {
-// 							new_data = append(new_data, data[g])
-// 						}
-// 					}
-// 					data = new_data
-// 				}
-// 			}
-// 		}
-// 	}
-// 	to_return := mysort(data[:start])
-// 	to_return = append(to_return, data[start])
-// 	return slices.Concat(to_return, mysort(data[start+1:]))
-// }
-
-func qsort(data []Record) []Record {
+func qsort(data []Record, left, right int) []Record {
 	if len(data) < 2 {
 		return data
 	}
 	start := data[len(data)/2]
-	left, right := 0, len(data)-1
 	for left <= right {
-		for IsBigger(data[left], start) == false {
+		for IsBigger(start, data[left]) == true {
 			left++
 		}
 		for IsBigger(data[right], start) == true {
@@ -513,7 +449,8 @@ func qsort(data []Record) []Record {
 		data[left], data[right] = data[right], data[left]
 	}
 	new_start_ind := FindElem(data, start)
-	data = slices.Concat(append(qsort(data[:new_start_ind]), data[new_start_ind]), qsort(data[new_start_ind:]))
+	qsort(data, 0, new_start_ind)
+	qsort(data, new_start_ind+1, len(data)-1)
 	return data
 }
 
@@ -566,7 +503,7 @@ func main() {
 			}
 		}
 	}
-	output_data = qsort(output_data)
+	output_data = qsort(output_data, 0, len(output_data)-1)
 	for i := range output_data {
 		write_to_file_line(data[i], *output_file)
 	}
