@@ -51,6 +51,42 @@ func (record Record) String() string {
 	return to_return
 }
 
+func FindElem(data []Record, elem Record) int {
+	for i := range data {
+		if data[i] == elem {
+			return i
+		}
+	}
+	return -1
+}
+
+func IsBigger(first_record, second_record Record) bool {
+	if (first_record.free_count * first_record.ticket_cost) >
+		(second_record.free_count * second_record.ticket_cost) {
+		return true
+	} else if (first_record.free_count * first_record.ticket_cost) <
+		(second_record.free_count * second_record.ticket_cost) {
+		return false
+	} else {
+		if first_record.flight_number.name > second_record.flight_number.name {
+			return true
+		} else if first_record.flight_number.name < second_record.flight_number.name &&
+			first_record.flight_number.id > second_record.flight_number.id {
+			return true
+		} else if first_record.flight_number.name < second_record.flight_number.name &&
+			first_record.flight_number.id < second_record.flight_number.id {
+			return false
+		} else {
+			if status_converter(first_record.status) > status_converter(second_record.status) {
+				return true
+			} else if status_converter(first_record.status) < status_converter(second_record.status) {
+				return false
+			}
+		}
+	}
+	return false
+}
+
 func split(data, delimeter string) []string {
 	result := make([]string, strings.Count(data, delimeter)+1)
 	count := strings.Count(data, delimeter)
@@ -316,7 +352,7 @@ func check_flight_number(to_analyze string) string {
 		return "abnormal"
 	}
 	if 90 >= to_analyze[0] && to_analyze[0] >= 65 &&
-		90 >= to_analyze[1] && to_analyze[1] >= 65 && err != nil {
+		90 >= to_analyze[1] && to_analyze[1] >= 65 && err == nil {
 		return "output"
 	}
 	return "incorect"
@@ -370,29 +406,18 @@ func checker(line string) (string, Record) {
 			var date Date
 			var start_time Time
 			var arrival_time Time
-			flight_name := data[0][:1]
-			flight_id, _ := strconv.Atoi(data[0][2:])
-			flight_number.name = flight_name
-			flight_number.id = flight_id
+			flight_number.id, _ = strconv.Atoi(data[0][2:])
+			flight_number.name = data[0][:1]
 			to_return.flight_number = flight_number
-			day, month, year := eval_date(data[1])
-			date.day = day
-			date.month = month
-			date.year = year
+			date.day, date.month, date.year = eval_date(data[1])
 			to_return.date = date
-			start_minutes, start_hours := eval_time(data[2])
-			arrival_minutes, arrival_hours := eval_time(data[3])
-			start_time.minutes = start_minutes
-			start_time.hours = start_hours
-			arrival_time.minutes = arrival_minutes
-			arrival_time.hours = arrival_hours
+			start_time.minutes, start_time.hours = eval_time(data[2])
+			arrival_time.minutes, arrival_time.hours = eval_time(data[3])
 			to_return.departure_time = start_time
 			to_return.arrival_time = arrival_time
-			free_count, _ := strconv.Atoi(data[4])
-			to_return.free_count = free_count
+			to_return.free_count, _ = strconv.Atoi(data[4])
 			to_return.status = data[5]
-			ticket_cost, _ := strconv.Atoi(data[6])
-			to_return.ticket_cost = ticket_cost
+			to_return.ticket_cost, _ = strconv.Atoi(data[6])
 			return "output", to_return
 		}
 	}
@@ -408,68 +433,88 @@ func write_to_file_line(line string, file os.File) {
 	file.WriteString(line)
 }
 
+// func mysort(data []Record) []Record {
+// 	if len(data) < 2 {
+// 		return data
+// 	}
+// 	start := len(data) / 2
+// 	for i := range data {
+// 		if (data[i].free_count * data[i].ticket_cost) >
+// 			(data[start].free_count * data[start].ticket_cost) {
+// 			elem := data[i]
+// 			data = slices.Concat(data[:i], data[i+1:start], data[start:])
+// 			data = append(data, elem)
+// 		} else if (data[i].free_count * data[i].ticket_cost) <
+// 			(data[start].free_count * data[start].ticket_cost) {
+// 			new_data := []Record{}
+// 			new_data[0] = data[i]
+// 			for g := 0; g < len(data); g++ {
+// 				if g != i {
+// 					new_data = append(new_data, data[g])
+// 				}
+// 			}
+// 			data = new_data
+// 		} else {
+// 			if data[i].flight_number.name > data[start].flight_number.name {
+// 				elem := data[i]
+// 				data = slices.Concat(data[:i], data[i+1:start], data[start:])
+// 				data = append(data, elem)
+// 			} else if data[i].flight_number.name < data[start].flight_number.name &&
+// 				data[i].flight_number.id > data[start].flight_number.id {
+// 				elem := data[i]
+// 				data = slices.Concat(data[:i], data[i+1:start], data[start:])
+// 				data = append(data, elem)
+// 			} else if data[i].flight_number.name < data[start].flight_number.name &&
+// 				data[i].flight_number.id < data[start].flight_number.id {
+// 				new_data := []Record{}
+// 				new_data[0] = data[i]
+// 				for g := 0; g < len(data); g++ {
+// 					if g != i {
+// 						new_data = append(new_data, data[g])
+// 					}
+// 				}
+// 				data = new_data
+// 			} else {
+// 				if status_converter(data[i].status) > status_converter(data[start].status) {
+// 					elem := data[i]
+// 					data = slices.Concat(data[:i], data[i+1:start], data[start:])
+// 					data = append(data, elem)
+// 				} else if status_converter(data[i].status) < status_converter(data[start].status) {
+// 					new_data := []Record{}
+// 					new_data[0] = data[i]
+// 					for g := 0; g < len(data); g++ {
+// 						if g != i {
+// 							new_data = append(new_data, data[g])
+// 						}
+// 					}
+// 					data = new_data
+// 				}
+// 			}
+// 		}
+// 	}
+// 	to_return := mysort(data[:start])
+// 	to_return = append(to_return, data[start])
+// 	return slices.Concat(to_return, mysort(data[start+1:]))
+// }
+
 func qsort(data []Record) []Record {
 	if len(data) < 2 {
 		return data
 	}
-	start := len(data) / 2
-	for i := range data {
-		if (data[i].free_count * data[i].ticket_cost) >
-			(data[start].free_count * data[start].ticket_cost) {
-			elem := data[i]
-			data = slices.Concat(data[:i], data[i+1:start], data[start:])
-			data = append(data, elem)
-		} else if (data[i].free_count * data[i].ticket_cost) <
-			(data[start].free_count * data[start].ticket_cost) {
-			new_data := []Record{}
-			new_data[0] = data[i]
-			for g := 0; g < len(data); g++ {
-				if g != i {
-					new_data = append(new_data, data[g])
-				}
-			}
-			data = new_data
-		} else {
-			if data[i].flight_number.name > data[start].flight_number.name {
-				elem := data[i]
-				data = slices.Concat(data[:i], data[i+1:start], data[start:])
-				data = append(data, elem)
-			} else if data[i].flight_number.name < data[start].flight_number.name &&
-				data[i].flight_number.id > data[start].flight_number.id {
-				elem := data[i]
-				data = slices.Concat(data[:i], data[i+1:start], data[start:])
-				data = append(data, elem)
-			} else if data[i].flight_number.name < data[start].flight_number.name &&
-				data[i].flight_number.id < data[start].flight_number.id {
-				new_data := []Record{}
-				new_data[0] = data[i]
-				for g := 0; g < len(data); g++ {
-					if g != i {
-						new_data = append(new_data, data[g])
-					}
-				}
-				data = new_data
-			} else {
-				if status_converter(data[i].status) > status_converter(data[start].status) {
-					elem := data[i]
-					data = slices.Concat(data[:i], data[i+1:start], data[start:])
-					data = append(data, elem)
-				} else if status_converter(data[i].status) < status_converter(data[start].status) {
-					new_data := []Record{}
-					new_data[0] = data[i]
-					for g := 0; g < len(data); g++ {
-						if g != i {
-							new_data = append(new_data, data[g])
-						}
-					}
-					data = new_data
-				}
-			}
+	start := data[len(data)/2]
+	left, right := 0, len(data)-1
+	for left <= right {
+		for IsBigger(data[left], start) == false {
+			left++
 		}
+		for IsBigger(data[right], start) == true {
+			right--
+		}
+		data[left], data[right] = data[right], data[left]
 	}
-	to_return := qsort(data[:start])
-	to_return = append(to_return, data[start])
-	return slices.Concat(to_return, data[start+1:])
+	new_start_ind := FindElem(data, start)
+	data = slices.Concat(append(qsort(data[:new_start_ind]), data[new_start_ind]), qsort(data[new_start_ind:]))
+	return data
 }
 
 func main() {
