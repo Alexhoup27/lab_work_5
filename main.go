@@ -35,7 +35,7 @@ func (record Record) String() string {
 	var to_return string
 	to_return += record.flight_number.name + "_" + strconv.Itoa(record.flight_number.id)
 	to_return += ","
-	to_return += strconv.Itoa(record.date.day) + "." + strconv.Itoa(record.date.month) + "." + string(record.date.year)
+	to_return += strconv.Itoa(record.date.day) + "." + strconv.Itoa(record.date.month) + "." + strconv.Itoa(record.date.year)
 	to_return += ","
 	delta_minutes, delta_hours := eval_time_delta(record.departure_time, record.arrival_time)
 	to_return += strconv.Itoa(delta_hours) + ":" + strconv.Itoa(delta_minutes)
@@ -114,7 +114,7 @@ func status_converter(data string) int {
 }
 
 func month_converter(month string) int {
-	switch month {
+	switch strings.ToLower(month) {
 	case "jan":
 		return 1
 	case "feb":
@@ -257,18 +257,18 @@ func check_count_places(data string) string {
 
 func check_time(time string) string { // remake with documentation - done
 	hours, err_h := strconv.Atoi(time[:2])
-	minutest, err_m := strconv.Atoi(time[3:5])
-	if err_h != nil || err_m != nil || (strings.Contains("p", time) == false &&
-		strings.Contains("P", time) == false && strings.Contains("a", time) == false &&
-		strings.Contains("A", time) == false) {
+	minutes, err_m := strconv.Atoi(time[3:5])
+	if err_h != nil || err_m != nil || (strings.Contains(time, "p") == false &&
+		strings.Contains(time, "P") == false && strings.Contains(time, "a") == false &&
+		strings.Contains(time, "A") == false) {
 		fmt.Println("Wrong type of time ")
 		return "incorect"
 	}
-	if hours <= 0 || hours >= 24 {
+	if hours < 0 || hours > 24 {
 		fmt.Println("Wrong hours")
 		return "abnormal"
 	}
-	if minutest <= 0 || minutest >= 60 {
+	if minutes < 0 || minutes > 60 {
 		fmt.Println("Wrong minutes")
 		return "abnormal"
 	}
@@ -489,6 +489,7 @@ func main() {
 	data := split(text, "\n")
 	for i := 0; i < len(data); i++ {
 		check_status, record := checker(data[i])
+		fmt.Println(check_status, data[i])
 		if check_status == "lefted" {
 			write_to_file_line(data[i], *lefted_file)
 		} else if check_status == "incorect" {
@@ -505,7 +506,7 @@ func main() {
 	}
 	output_data = qsort(output_data, 0, len(output_data)-1)
 	for i := range output_data {
-		write_to_file_line(data[i], *output_file)
+		write_to_file_record(output_data[i], *output_file)
 	}
 	output_file.Close()
 	duplicate_file.Close()
