@@ -33,7 +33,7 @@ type Record struct {
 
 func (record Record) String() string {
 	var to_return string
-	to_return += record.flight_number.name + "_" + strconv.Itoa(record.flight_number.id)
+	to_return += record.flight_number.name + strconv.Itoa(record.flight_number.id)
 	to_return += ","
 	to_return += strconv.Itoa(record.date.day) + "." + strconv.Itoa(record.date.month) + "." + strconv.Itoa(record.date.year)
 	to_return += ","
@@ -47,6 +47,7 @@ func (record Record) String() string {
 	to_return += record.status
 	to_return += ","
 	to_return += strconv.Itoa(record.ticket_cost * record.free_count)
+	to_return += "\n"
 	return to_return
 }
 
@@ -229,7 +230,7 @@ func check_in_output_data(record Record, output_data []Record) bool {
 func check_status(data string) string {
 	data = strings.ToLower(data)
 	for i := 0; i < len(data); i++ {
-		if 90 <= data[i] && data[i] <= 65 {
+		if 1103 <= int(data[i]) && int(data[i]) <= 1072 && int(data[i]) != 32 {
 			return "incorect"
 		}
 	}
@@ -358,6 +359,9 @@ func check_flight_number(to_analyze string) string {
 }
 
 func check_cost(to_analyze string) string {
+	if strings.Contains(to_analyze, "\r") == true {
+		to_analyze = to_analyze[:len(to_analyze)-2]
+	}
 	_, err := strconv.Atoi(to_analyze)
 	if err != nil {
 		return "incorect"
@@ -371,8 +375,8 @@ func checker(line string) (string, Record) {
 	if len(data) < 7 {
 		return "lefted", to_return
 	} else if len(data) == 7 {
-		flight_number_status := check_flight_number(data[0])
 		date_status := check_date(data[1])
+		flight_number_status := check_flight_number(data[0])
 		start_time_status := check_time(data[2])
 		end_time_status := check_time(data[3])
 		free_count_status := check_count_places(data[4])
@@ -385,6 +389,13 @@ func checker(line string) (string, Record) {
 			free_count_status == "incorect" ||
 			status_status == "incorect" ||
 			cost_status == "incorect" {
+			fmt.Println(flight_number_status)
+			fmt.Println(date_status)
+			fmt.Println(start_time_status)
+			fmt.Println(end_time_status)
+			fmt.Println(free_count_status)
+			fmt.Println(status_status)
+			fmt.Println(cost_status)
 			return "incorect", to_return
 		} else if flight_number_status == "abnormal" ||
 			date_status == "abnormal" ||
@@ -406,7 +417,7 @@ func checker(line string) (string, Record) {
 			var start_time Time
 			var arrival_time Time
 			flight_number.id, _ = strconv.Atoi(data[0][2:])
-			flight_number.name = data[0][:1]
+			flight_number.name = data[0][:2]
 			to_return.flight_number = flight_number
 			date.day, date.month, date.year = eval_date(data[1])
 			to_return.date = date
@@ -432,23 +443,28 @@ func write_to_file_line(line string, file os.File) {
 	file.WriteString(line)
 }
 
-func qsort(data []Record, left, right int) []Record {
-	if len(data) < 2 {
+func qsort(data []Record, left, right int) []Record { // smth wrong. infinity loop
+	// fmt.Println(right-left, left, right)
+	if right-left < 2 {
 		return data
 	}
-	start := data[len(data)/2]
-	for left <= right {
+	base_left, base_right := left, right
+	new_start_ind := ((right - left) / 2) + left
+	start := data[(right-left)/2]
+	for left < right {
+		// fmt.Println("here1", left, right, len(data))
 		for IsBigger(start, data[left]) == true {
 			left++
 		}
 		for IsBigger(data[right], start) == true {
 			right--
 		}
+		// fmt.Println("here2", left, right, len(data)) //understand what happend here with all data & fix infinity loop
 		data[left], data[right] = data[right], data[left]
 	}
-	new_start_ind := FindElem(data, start)
-	qsort(data, 0, new_start_ind)
-	qsort(data, new_start_ind+1, len(data)-1)
+	// fmt.Println("forever")
+	qsort(data, base_left, new_start_ind)
+	qsort(data, new_start_ind+1, base_right)
 	return data
 }
 
