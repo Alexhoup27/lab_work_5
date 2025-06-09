@@ -470,12 +470,16 @@ func qsort(data []Record, left, right int) []Record { // smth wrong. infinity lo
 
 func main() {
 	var file_path string
+	imposible_file, err_imp := os.Create("imposible.txt")
 	output_file, err_out := os.Create("output.txt")
 	duplicate_file, err_dup := os.Create("duplicate.txt")
 	incorect_file, err_inc := os.Create("incorect.txt")
 	lefted_file, err_left := os.Create("lefted.txt")
 	abnormal_file, err_abn := os.Create("abnormal.txt")
 	output_data := []Record{}
+	if err_imp != nil {
+		panic(err_imp)
+	}
 	if err_out != nil {
 		panic(err_out)
 	}
@@ -518,6 +522,8 @@ func main() {
 			} else {
 				output_data = append(output_data, record)
 			}
+		} else {
+			write_to_file_line(data[i], *imposible_file)
 		}
 	}
 	output_data = qsort(output_data, 0, len(output_data)-1)
