@@ -237,6 +237,15 @@ func eval_day_of_week(date Date) string {
 		return "Fri"
 	}
 }
+
+func eval_cost(data string) int {
+	if strings.Contains(data, "\r") == true {
+		data = data[:len(data)-1]
+	}
+	cost, _ := strconv.Atoi(data)
+	return cost
+}
+
 func check_in_output_data(record Record, output_data []Record) bool {
 	for i := 0; i < len(output_data); i++ {
 		if record == output_data[i] {
@@ -253,7 +262,6 @@ func check_status(data string) string {
 			return "incorect"
 		}
 	}
-	fmt.Println(data)
 	if data != "отменён" && data != "задержка" && data != "по расписанию" {
 		fmt.Println("Wrong status")
 		return "abnormal"
@@ -395,7 +403,7 @@ func check_flight_number(to_analyze string) string {
 
 func check_cost(to_analyze string) string {
 	if strings.Contains(to_analyze, "\r") == true {
-		to_analyze = to_analyze[:len(to_analyze)-2]
+		to_analyze = to_analyze[:len(to_analyze)-1]
 	}
 	_, err := strconv.Atoi(to_analyze)
 	if err != nil {
@@ -463,7 +471,7 @@ func checker(line string) (string, Record) {
 			to_return.arrival_time = arrival_time
 			to_return.free_count, _ = strconv.Atoi(data[4])
 			to_return.status = data[5]
-			to_return.ticket_cost, _ = strconv.Atoi(data[6])
+			to_return.ticket_cost = eval_cost(data[6])
 			return "output", to_return
 		}
 	}
