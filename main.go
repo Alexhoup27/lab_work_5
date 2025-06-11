@@ -87,6 +87,25 @@ func IsBigger(first_record, second_record Record) bool {
 	return false
 }
 
+func check_split(data, delimeter string) []string {
+	result := []string{}
+	var to_add string
+	for i := 0; i < len(data); i++ {
+		if string(data[i]) != delimeter {
+			to_add += string(data[i])
+		} else {
+			if to_add != "" {
+				result = append(result, to_add)
+				to_add = ""
+			}
+		}
+	}
+	if to_add != "" {
+		result = append(result, to_add)
+	}
+	return result
+}
+
 func split(data, delimeter string) []string {
 	result := make([]string, strings.Count(data, delimeter)+1)
 	count := strings.Count(data, delimeter)
@@ -234,6 +253,7 @@ func check_status(data string) string {
 			return "incorect"
 		}
 	}
+	fmt.Println(data)
 	if data != "отменён" && data != "задержка" && data != "по расписанию" {
 		fmt.Println("Wrong status")
 		return "abnormal"
@@ -257,6 +277,10 @@ func check_count_places(data string) string {
 }
 
 func check_time(time string) string { // remake with documentation - done
+	if len(time) < 8 {
+		fmt.Println("Not time")
+		return "incorect"
+	}
 	hours, err_h := strconv.Atoi(time[:2])
 	minutes, err_m := strconv.Atoi(time[3:5])
 	if err_h != nil || err_m != nil || (strings.Contains(time, "p") == false &&
@@ -278,6 +302,10 @@ func check_time(time string) string { // remake with documentation - done
 
 func check_date(date string) string { // remake with documentation - done
 	data := split(date, ".")
+	if len(data) < 3 {
+		fmt.Println("Now date")
+		return "incorect"
+	}
 	day, err_d := strconv.Atoi(data[0])
 	month := month_converter(data[1])
 	year, err_y := strconv.Atoi(data[2])
@@ -347,7 +375,14 @@ func check_date(date string) string { // remake with documentation - done
 }
 
 func check_flight_number(to_analyze string) string {
+	if len(to_analyze) < 2 {
+		fmt.Println("Not flight number")
+		return "incorect"
+	}
 	_, err := strconv.Atoi(to_analyze[2:])
+	if err != nil {
+		return "incorect"
+	}
 	if len(to_analyze) > 6 {
 		return "abnormal"
 	}
@@ -371,12 +406,13 @@ func check_cost(to_analyze string) string {
 
 func checker(line string) (string, Record) {
 	var to_return Record
-	data := split(line, ",")
-	if len(data) < 7 {
+	data := check_split(line, ",")
+	if len(data) < 7 { //Rework checking for lefted - done
 		return "lefted", to_return
 	} else if len(data) == 7 {
-		date_status := check_date(data[1])
+		data = split(line, ",")
 		flight_number_status := check_flight_number(data[0])
+		date_status := check_date(data[1])
 		start_time_status := check_time(data[2])
 		end_time_status := check_time(data[3])
 		free_count_status := check_count_places(data[4])
@@ -468,6 +504,43 @@ func qsort(data []Record, left, right int) []Record { // smth wrong. infinity lo
 	return data
 }
 
+func find_lefted(line string) int {
+	data := check_split(line, ",")
+	for i := 0; i < len(data); i++ {
+		switch i {
+		case 0:
+			if check_flight_number(data[i]) == "incorect" {
+				return 0
+			}
+		case 1:
+			if check_date(data[i]) == "incorect" {
+				return 1
+			}
+		case 2:
+			if check_time(data[i]) == "incorect" {
+				return 2
+			}
+		case 3:
+			if check_time(data[i]) == "incorect" {
+				return 3
+			}
+		case 4:
+			if check_count_places(data[i]) == "incorect" {
+				return 4
+			}
+		case 5:
+			if check_status(data[i]) == "incorect" {
+				return 5
+			}
+		case 6:
+			if check_cost(data[i]) == "incorect" {
+				return 6
+			}
+		}
+	}
+	return -1
+}
+
 func main() {
 	var file_path string
 	imposible_file, err_imp := os.Create("imposible.txt")
@@ -510,8 +583,12 @@ func main() {
 	for i := 0; i < len(data); i++ {
 		check_status, record := checker(data[i])
 		fmt.Println(check_status, data[i])
-		if check_status == "lefted" {
-			write_to_file_line(data[i], *lefted_file)
+		if check_status == "lefted" { //rework lefted preprocessing
+			index := find_lefted(data[i])
+			if index == -1 {
+				fmt.Println("smth wrong")
+			}
+			write_to_file_line(string(index)+" "+data[i], *lefted_file)
 		} else if check_status == "incorect" {
 			write_to_file_line(data[i], *incorect_file)
 		} else if check_status == "abnormal" {
