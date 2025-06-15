@@ -63,23 +63,30 @@ func FindElem(data []Record, elem Record) int {
 func IsBigger(first_record, second_record Record) bool {
 	if (first_record.free_count * first_record.ticket_cost) >
 		(second_record.free_count * second_record.ticket_cost) {
+		// fmt.Println("Here 1")
 		return true
 	} else if (first_record.free_count * first_record.ticket_cost) <
 		(second_record.free_count * second_record.ticket_cost) {
+		// fmt.Println("Here 2")
 		return false
 	} else {
 		if first_record.flight_number.name > second_record.flight_number.name {
+			// fmt.Println("Here 3")
 			return true
-		} else if first_record.flight_number.name < second_record.flight_number.name &&
+		} else if first_record.flight_number.name <= second_record.flight_number.name &&
 			first_record.flight_number.id > second_record.flight_number.id {
+			// fmt.Println("Here 4")
 			return true
 		} else if first_record.flight_number.name < second_record.flight_number.name &&
 			first_record.flight_number.id < second_record.flight_number.id {
+			// fmt.Println("Here 5")
 			return false
 		} else {
 			if status_converter(first_record.status) > status_converter(second_record.status) {
+				// fmt.Println("Here 6")
 				return true
 			} else if status_converter(first_record.status) < status_converter(second_record.status) {
+				// fmt.Println("Here 7")
 				return false
 			}
 		}
@@ -244,6 +251,17 @@ func eval_cost(data string) int {
 	}
 	cost, _ := strconv.Atoi(data)
 	return cost
+}
+
+func check_access(record Record, data []Record) bool {
+	for i := 0; i < len(data); i++ {
+		if record.flight_number == data[i].flight_number {
+			if record.date == data[i].date && record.departure_time.hours <= data[i].departure_time.hours {
+				return false
+			}
+		}
+	}
+	return true
 }
 
 func check_in_output_data(record Record, output_data []Record) bool {
@@ -487,26 +505,22 @@ func write_to_file_line(line string, file os.File) {
 	file.WriteString(line)
 }
 
-func qsort(data []Record, left, right int) []Record { // smth wrong. infinity loop
-	// fmt.Println(right-left, left, right)
-	if right-left < 2 {
+func qsort(data []Record, left, right int) []Record { //Need to test more IsBigger (how I see it works correctly => need to check qsort  and test more IsBigger)
+	if right-left < 1 {
 		return data
 	}
 	base_left, base_right := left, right
 	new_start_ind := ((right - left) / 2) + left
-	start := data[(right-left)/2]
+	start := data[new_start_ind]
 	for left < right {
-		// fmt.Println("here1", left, right, len(data))
 		for IsBigger(start, data[left]) == true {
 			left++
 		}
 		for IsBigger(data[right], start) == true {
 			right--
 		}
-		// fmt.Println("here2", left, right, len(data)) //understand what happend here with all data & fix infinity loop
 		data[left], data[right] = data[right], data[left]
 	}
-	// fmt.Println("forever")
 	qsort(data, base_left, new_start_ind)
 	qsort(data, new_start_ind+1, base_right)
 	return data
@@ -557,6 +571,7 @@ func main() {
 	incorect_file, err_inc := os.Create("incorect.txt")
 	lefted_file, err_left := os.Create("lefted.txt")
 	abnormal_file, err_abn := os.Create("abnormal.txt")
+	manual_file, err_man := os.Create("manual.txt")
 	output_data := []Record{}
 	if err_imp != nil {
 		panic(err_imp)
@@ -576,6 +591,9 @@ func main() {
 	if err_abn != nil {
 		panic(err_abn)
 	}
+	if err_man != nil {
+		panic(err_man)
+	}
 	fmt.Println("Enter file name with datatype")
 	fmt.Scan(&file_path)
 	file, f_err := os.Open(file_path)
@@ -593,9 +611,6 @@ func main() {
 		fmt.Println(check_status, data[i])
 		if check_status == "lefted" { //rework lefted preprocessing
 			index := find_lefted(data[i])
-			if index == -1 {
-				fmt.Println("smth wrong")
-			}
 			write_to_file_line(string(index)+" "+data[i], *lefted_file)
 		} else if check_status == "incorect" {
 			write_to_file_line(data[i], *incorect_file)
@@ -604,6 +619,8 @@ func main() {
 		} else if check_status == "output" {
 			if check_in_output_data(record, output_data) {
 				write_to_file_record(record, *duplicate_file)
+			} else if check_access(record, output_data) == false {
+				write_to_file_record(record, *manual_file)
 			} else {
 				output_data = append(output_data, record)
 			}
@@ -620,5 +637,7 @@ func main() {
 	incorect_file.Close()
 	lefted_file.Close()
 	abnormal_file.Close()
+	manual_file.Close()
+	imposible_file.Close()
 	fmt.Println("Done")
 }
