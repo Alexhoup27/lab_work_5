@@ -61,7 +61,7 @@ func FindElem(data []Record, elem Record) int {
 }
 
 func IsBigger(first_record, second_record Record) bool {
-	if (first_record.free_count * first_record.ticket_cost) >
+	if (first_record.free_count * first_record.ticket_cost) >=
 		(second_record.free_count * second_record.ticket_cost) {
 		// fmt.Println("Here 1")
 		return true
@@ -91,6 +91,37 @@ func IsBigger(first_record, second_record Record) bool {
 			}
 		}
 	}
+	return false
+}
+
+func NewIsBigger(first_record, second_record Record) bool {
+	if (first_record.free_count * first_record.ticket_cost) >
+		(second_record.free_count * second_record.ticket_cost) {
+		// fmt.Println("Here 1")
+		return true
+	} else if (first_record.free_count * first_record.ticket_cost) <
+		(second_record.free_count * second_record.ticket_cost) {
+		// fmt.Println("Here 2")
+		return false
+	} else {
+		if first_record.flight_number.name > second_record.flight_number.name {
+			// fmt.Println("Here 3")
+			return true
+		} else if first_record.flight_number.name < second_record.flight_number.name {
+			return false
+		} else {
+			if first_record.flight_number.id > second_record.flight_number.id {
+				return true
+			} else if first_record.flight_number.id < second_record.flight_number.id {
+				return false
+			} else {
+				if status_converter(first_record.status) > status_converter(second_record.status) {
+					return true
+				}
+			}
+		}
+	}
+
 	return false
 }
 
@@ -506,17 +537,18 @@ func write_to_file_line(line string, file os.File) {
 }
 
 func qsort(data []Record, left, right int) []Record { //Need to test more IsBigger (how I see it works correctly => need to check qsort  and test more IsBigger)
-	if right-left < 1 {
+	if right-left <= 1 {
 		return data
 	}
 	base_left, base_right := left, right
 	new_start_ind := ((right - left) / 2) + left
 	start := data[new_start_ind]
+	// prev_left, prev_right := left, right
 	for left < right {
-		for IsBigger(start, data[left]) == true {
+		for IsBigger(start, data[left]) {
 			left++
 		}
-		for IsBigger(data[right], start) == true {
+		for IsBigger(data[right], start) {
 			right--
 		}
 		data[left], data[right] = data[right], data[left]
@@ -524,6 +556,28 @@ func qsort(data []Record, left, right int) []Record { //Need to test more IsBigg
 	qsort(data, base_left, new_start_ind)
 	qsort(data, new_start_ind+1, base_right)
 	return data
+}
+
+func partition(data []Record, left, right int) int {
+	pivot := data[right] // Choosing the last element as pivot
+	i := left - 1
+
+	for j := left; j < right; j++ {
+		if NewIsBigger(pivot, data[j]) {
+			i++
+			data[i], data[j] = data[j], data[i] // Swap
+		}
+	}
+	data[i+1], data[right] = data[right], data[i+1] // Place pivot in correct position
+	return i + 1
+}
+
+func new_qsort(data []Record, left, right int) {
+	if left < right {
+		pi := partition(data, left, right)
+		new_qsort(data, left, pi-1)
+		new_qsort(data, pi+1, right)
+	}
 }
 
 func find_lefted(line string) int {
@@ -594,8 +648,9 @@ func main() {
 	if err_man != nil {
 		panic(err_man)
 	}
-	fmt.Println("Enter file name with datatype")
-	fmt.Scan(&file_path)
+	// fmt.Println("Enter file name with datatype")
+	// fmt.Scan(&file_path)
+	file_path = "test.txt"
 	file, f_err := os.Open(file_path)
 	if f_err != nil {
 		panic(f_err)
@@ -628,7 +683,10 @@ func main() {
 			write_to_file_line(data[i], *imposible_file)
 		}
 	}
-	output_data = qsort(output_data, 0, len(output_data)-1)
+	fmt.Println(output_data[3])
+	fmt.Println(output_data[4])
+	fmt.Println(output_data[5])
+	new_qsort(output_data, 0, len(output_data)-1)
 	for i := range output_data {
 		write_to_file_record(output_data[i], *output_file)
 	}
