@@ -33,22 +33,36 @@ type Record struct {
 
 func (record Record) String() string {
 	var to_return string
-	to_return += record.flight_number.name + strconv.Itoa(record.flight_number.id)
-	to_return += ","
-	to_return += strconv.Itoa(record.date.day) + "." + strconv.Itoa(record.date.month) + "." + strconv.Itoa(record.date.year)
-	to_return += ","
+	to_return += RJust(record.flight_number.name+strconv.Itoa(record.flight_number.id), 13, false)
+	to_return += " | "
+	to_return += RJust(strconv.Itoa(record.date.day)+"."+strconv.Itoa(record.date.month)+"."+strconv.Itoa(record.date.year), 11, false)
+	to_return += " | "
 	delta_minutes, delta_hours := eval_time_delta(record.departure_time, record.arrival_time)
-	to_return += strconv.Itoa(delta_hours) + ":" + strconv.Itoa(delta_minutes)
-	to_return += ","
-	to_return += strconv.Itoa(record.free_count)
-	to_return += ","
-	to_return += eval_day_of_week(record.date)
-	to_return += ","
-	to_return += record.status
-	to_return += ","
-	to_return += strconv.Itoa(record.ticket_cost * record.free_count)
+	to_return += RJust(strconv.Itoa(delta_hours)+":"+strconv.Itoa(delta_minutes), 15, false)
+	to_return += " | "
+	to_return += RJust(strconv.Itoa(record.free_count), 22, false)
+	to_return += " | "
+	to_return += RJust(eval_day_of_week(record.date), 11, false)
+	to_return += " | "
+	to_return += RJust(record.status, 13, true)
+	to_return += " | "
+	to_return += RJust(strconv.Itoa(record.ticket_cost*record.free_count), 11, false)
 	to_return += "\n"
 	return to_return
+}
+
+func RJust(data string, _len int, is_russion bool) string {
+	start_len := len(data)
+	if is_russion {
+		start_len /= 2
+	}
+	if _len <= start_len {
+		return data
+	}
+	for i := 0; i < _len-start_len; i++ {
+		data += " "
+	}
+	return data
 }
 
 func FindElem(data []Record, elem Record) int {
@@ -378,7 +392,7 @@ func check_date(date string) string { // remake with documentation - done
 		return "incorect"
 	}
 	if year >= 2000 && year <= 2024 {
-		if (year/4)%2 == 1 && year%2 == 0 {
+		if year%4 == 0 {
 			if month == 2 {
 				if day >= 1 && day <= 29 {
 					return "output"
@@ -545,10 +559,10 @@ func qsort(data []Record, left, right int) []Record { //Need to test more IsBigg
 	start := data[new_start_ind]
 	// prev_left, prev_right := left, right
 	for left < right {
-		for IsBigger(start, data[left]) {
+		for NewIsBigger(start, data[left]) {
 			left++
 		}
-		for IsBigger(data[right], start) {
+		for NewIsBigger(data[right], start) {
 			right--
 		}
 		data[left], data[right] = data[right], data[left]
@@ -687,6 +701,7 @@ func main() {
 	fmt.Println(output_data[4])
 	fmt.Println(output_data[5])
 	new_qsort(output_data, 0, len(output_data)-1)
+	write_to_file_line("Flight Number | Flight date | Flight duration | Count of unused places | Day of week | Flight status | Lost profit", *output_file)
 	for i := range output_data {
 		write_to_file_record(output_data[i], *output_file)
 	}
