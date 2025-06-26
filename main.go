@@ -33,12 +33,12 @@ type Record struct {
 
 func (record Record) String() string {
 	var to_return string
-	to_return += RJust(record.flight_number.name+strconv.Itoa(record.flight_number.id), 13, false)
+	to_return += RJust(record.flight_number.name+ZeroLJusr(strconv.Itoa(record.flight_number.id), 3), 13, false)
 	to_return += " | "
-	to_return += RJust(strconv.Itoa(record.date.day)+"."+strconv.Itoa(record.date.month)+"."+strconv.Itoa(record.date.year), 11, false)
+	to_return += RJust(ZeroLJusr(strconv.Itoa(record.date.day), 2)+"."+ZeroLJusr(strconv.Itoa(record.date.month), 2)+"."+strconv.Itoa(record.date.year), 11, false)
 	to_return += " | "
 	delta_minutes, delta_hours := eval_time_delta(record.departure_time, record.arrival_time)
-	to_return += RJust(strconv.Itoa(delta_hours)+":"+strconv.Itoa(delta_minutes), 15, false)
+	to_return += RJust(ZeroLJusr(strconv.Itoa(delta_hours), 2)+":"+ZeroLJusr(strconv.Itoa(delta_minutes), 2), 15, false)
 	to_return += " | "
 	to_return += RJust(strconv.Itoa(record.free_count), 22, false)
 	to_return += " | "
@@ -49,6 +49,20 @@ func (record Record) String() string {
 	to_return += RJust(strconv.Itoa(record.ticket_cost*record.free_count), 11, false)
 	to_return += "\n"
 	return to_return
+}
+
+func ZeroLJusr(data string, _len int) string {
+	var new_data string
+	if len(data) == _len {
+		return data
+	} else {
+		start_len := len(data)
+		for i := 0; i < _len-start_len; i++ {
+			new_data += "0"
+		}
+		new_data += data
+		return new_data
+	}
 }
 
 func RJust(data string, _len int, is_russion bool) string {
